@@ -72,7 +72,7 @@ unsigned long interval300 = 50;
 const long interval_to_store_card = 5000;
 const long interval_to_store_count = 10000;
 byte reading_card[6], prev_card[6]; //for reading card
-byte master[6] = {118, 111, 43, 20, 38}; // allowed card
+byte master[6] = {102, 0, 52, 254, 176, 0}; // allowed card
 byte all_cards[6][5];
 unsigned char card_was_read;
 unsigned char iMasterPasswordLengthAddress = 30;
@@ -108,11 +108,12 @@ boolean write_StringEE(int Addr, String input);
 void setup()
 {
   rfid.begin();
-  Serial.flush(); 
   Serial.begin(9600);  // start serial to PC
+  Serial.flush(); 
+  delay(1000);
   pinMode(RED_LED, OUTPUT);
   pinMode(GREEN_LED, OUTPUT);
-  k = card_was_read = 0;
+  card_was_read = 0;
   isBlocked = false;
   strPassword = read_master_password();
   isMasterCardPresentInEEPROM = read_master_card();
@@ -124,17 +125,13 @@ void setup()
 void loop()
 {
   if (rfid.available()>0) {
-    delay(100);
     rfid.getData(reading_card,length);
     unsigned long currentMillis = millis();
-    Serial.println(currentMillis);
-    Serial.println(previousMillis);
-    Serial.println(currentMillis - previousMillis);
     if (currentMillis - previousMillis >= interval_to_store_card) {
       previousMillis = currentMillis;
       resetPrevCard();
     }
-    if ((!isTheSameCard())&&(k == 0)) {
+    if (!isTheSameCard()) {
       card_was_read = 1;
       Serial.println(" ");
       Serial.println("Card found");
@@ -144,24 +141,11 @@ void loop()
         Serial.print(reading_card[i]);
         Serial.print(" ");
       }
-      Serial.println("Prev cardnumber:");
-      for (i = 0; i < 6; i++) {
-        Serial.print(prev_card[i]);
-        Serial.print(" ");
-      }
       Serial.println();
       
     }
-    else {
-      k++;
-      Serial.print("."); Serial.print(k);
-    }
   }
   else {
-    if (millis() - previousMillisout >= interval_to_store_count) {
-      previousMillisout = millis();
-      k = 0;
-    }
     if (Serial.available()) {
       String temp = Serial.readString();
       Serial_menu(temp);
@@ -184,48 +168,15 @@ void loop()
         k = 0;
       }
     }
-    if ((k<=interval80) && (card_was_read == 1)) {
+    if (card_was_read == 1) {
       Serial.println("k<80 and card_was_read");
       card_was_read = 0;
-      k=0;
       if (verify()) {
         allow();
       }
       else {
         denied();
-      }
-      k = 0;    
-    }
-    else {
-      if ((k>=interval80) && (k<interval300)&& (card_was_read == 1)) {
-        Serial.println("(k>=80) && (k<300)&& (card_was_read == 1)");
-        card_was_read = 0;
-        if (isMasterCard()) {
-          Serial.println("add card");
-          add_card();
-        }
-        else {
-          denied();
-        }
-        k = 0;
-      }
-      else
-      {
-        if ((k>300)&& (card_was_read == 1)) {
-          Serial.println("(k>300)&& (card_was_read == 1)");
-          read_all_cards(); 
-          //if (!EEPROM.read(iMasterPasswordLengthAddress)) {
-            write_master_password(strPassword);
-          //}
-          Serial.println("Master password from EEPROM:");
-          Serial.print("Lenght : ");
-          Serial.print(EEPROM.read(iMasterPasswordLengthAddress));
-          Serial.print("; Password: ");
-          Serial.println(read_master_password());
-          k=0; 
-          card_was_read = 0;
-        }
-      }
+      }   
     }
   }
 }
