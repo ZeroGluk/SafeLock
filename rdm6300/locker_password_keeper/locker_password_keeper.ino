@@ -60,7 +60,7 @@ rdm630 rfid(8, 7); // RX and TX
 
 const int EEPROM_MIN_ADDR = 0;
 const int EEPROM_MAX_ADDR = 511;
-unsigned long previousMillis, previousMillisIsBlockedBlink, k = 0;
+unsigned long previousMillis, previousMillisout, previousMillisIsBlockedBlink, k = 0;
 unsigned long blink_delay = 1000;
 unsigned long add_blink_delay = 1000;
 unsigned long added_blink_delay = 125;
@@ -70,6 +70,7 @@ unsigned long isBlocked_blink_delay = 25;
 unsigned long interval80 = 30;
 unsigned long interval300 = 50;
 const long interval_to_store_card = 5000;
+const long interval_to_store_count = 10000;
 byte reading_card[6], prev_card[6]; //for reading card
 byte master[6] = {118, 111, 43, 20, 38}; // allowed card
 byte all_cards[6][5];
@@ -123,8 +124,12 @@ void setup()
 void loop()
 {
   if (rfid.available()>0) {
+    delay(100);
     rfid.getData(reading_card,length);
     unsigned long currentMillis = millis();
+    Serial.println(currentMillis);
+    Serial.println(previousMillis);
+    Serial.println(currentMillis - previousMillis);
     if (currentMillis - previousMillis >= interval_to_store_card) {
       previousMillis = currentMillis;
       resetPrevCard();
@@ -153,9 +158,8 @@ void loop()
     }
   }
   else {
-    if (millis() - previousMillis >= interval_to_store_card) {
-      previousMillis = millis();
-      resetPrevCard();
+    if (millis() - previousMillisout >= interval_to_store_count) {
+      previousMillisout = millis();
       k = 0;
     }
     if (Serial.available()) {
@@ -183,6 +187,7 @@ void loop()
     if ((k<=interval80) && (card_was_read == 1)) {
       Serial.println("k<80 and card_was_read");
       card_was_read = 0;
+      k=0;
       if (verify()) {
         allow();
       }
@@ -361,6 +366,11 @@ void Serial_menu(String temp) {
                   Serial.println(k);
                   Serial.println(card_was_read);
                   Serial.println(length);
+                  Serial.println("");
+                  for (int i=0; i<7; i++){
+                    Serial.print(prev_card[i]);
+                    Serial.print(" ");
+                  }
                   Serial.println("");
                 } else {
                   Serial.println("Please use help command.");   
@@ -577,8 +587,10 @@ void resetPrevCard() {
 boolean isTheSameCard() {
   for (i = 0; i < 6; i++) {
     if (prev_card[i] != reading_card[i]) {
+      Serial.println("Not the same card");
       return false;
     }
   }
+  Serial.println("The same card");
   return true;
 }
