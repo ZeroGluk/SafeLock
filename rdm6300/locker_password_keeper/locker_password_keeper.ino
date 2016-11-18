@@ -65,7 +65,7 @@ unsigned long blink_delay = 1000;
 unsigned long add_blink_delay = 1000;
 unsigned long added_blink_delay = 125;
 unsigned long failed_blink_delay = 50;
-unsigned long isBlocked_blink_interval = 10000;
+unsigned long isBlocked_blink_interval = 5000;
 unsigned long isBlocked_blink_delay = 25;
 unsigned long interval80 = 30;
 unsigned long interval300 = 50;
@@ -79,7 +79,7 @@ unsigned char iMasterPasswordLengthAddress = 30;
 unsigned char iMasterPasswordStartAddress = 40;
 boolean isBlocked, isMasterCardPresentInEEPROM;
 unsigned char i;
-String strPassword;
+String strPassword = "Arthur231113";
 boolean traceOn; 
 int j;
 byte length;
@@ -115,10 +115,10 @@ void setup()
   pinMode(GREEN_LED, OUTPUT);
   card_was_read = 0;
   isBlocked = false;
-  strPassword = read_master_password();
-  isMasterCardPresentInEEPROM = read_master_card();
+  //strPassword = read_master_password();
+  isMasterCardPresentInEEPROM = true;//read_master_card();
   traceOn = true;
-  read_all_cards();
+  //read_all_cards();
   double_indication(RED_LED, GREEN_LED, blink_delay, 1);
 }
  
@@ -350,7 +350,7 @@ boolean verify() {
   for (int i=0; i<6; i++) {
     int j=0;
     for (j=0; j<6; j++) {
-      if (reading_card[j]!=all_cards[i][j]) {
+      if (reading_card[j]!=master[j]) {
         break;
       }
     }
@@ -463,10 +463,10 @@ void block() {
 }
 
 void login() {
-  Keyboard.press(KEY_RIGHT_GUI);
-  Keyboard.write('d');
-  Keyboard.release(KEY_RIGHT_GUI);
-  delay(500);
+  //Keyboard.press(KEY_RIGHT_GUI);
+  //Keyboard.write('d');
+  //Keyboard.release(KEY_RIGHT_GUI);
+  //delay(500);
   Keyboard.press(KEY_BACKSPACE);
   Keyboard.release(KEY_BACKSPACE);
   Keyboard.println(strPassword);
